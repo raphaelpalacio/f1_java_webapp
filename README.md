@@ -13,15 +13,16 @@ A Java-based application for analyzing Formula 1 data and predicting race outcom
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   F1 Data API   │────▶│   Java Backend   │────▶│   PostgreSQL    │
-│   (Ergast API)  │     │   (Data Prep)    │     │   Database      │
+│   F1 Data API   │────▶│  Spring Boot +   │────▶│   PostgreSQL    │
+│   (Ergast API)  │     │     Vaadin       │     │   Database      │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
-                                │                        │
-                                ▼                        ▼
-                        ┌──────────────────┐     ┌─────────────────┐
-                        │  Python/Colab    │     │    Tableau      │
-                        │  (ML Models)     │     │  (Dashboards)   │
-                        └──────────────────┘     └─────────────────┘
+                                │
+                ┌───────────────┼───────────────┐
+                ▼               ▼               ▼
+        ┌──────────────┐ ┌────────────┐ ┌─────────────┐
+        │   Vaadin UI  │ │  Python    │ │   Tableau   │
+        │  (Web App)   │ │ (ML/Colab) │ │ (Reports)   │
+        └──────────────┘ └────────────┘ └─────────────┘
 ```
 
 ## 🛠️ Tech Stack
@@ -29,12 +30,18 @@ A Java-based application for analyzing Formula 1 data and predicting race outcom
 | Component | Technology |
 |-----------|------------|
 | **Core Language** | Java 17+ |
-| **Build Tool** | Maven / Gradle |
+| **Framework** | Spring Boot 3.x |
+| **Frontend** | Vaadin 24 (100% Java UI) |
+| **Build Tool** | Maven |
 | **Database** | PostgreSQL |
-| **ORM** | JDBC / Hibernate |
-| **ML Integration** | Python (via Jython or REST API) |
-| **Visualization** | Tableau / JavaFX charts |
+| **ORM** | Spring Data JPA / Hibernate |
+| **ML Integration** | Python (via REST API or Colab) |
+| **Visualization** | Vaadin Charts + Tableau |
 | **Data Source** | [Ergast F1 API](http://ergast.com/mrd/) |
+
+### Why Vaadin?
+
+Vaadin lets you build modern web UIs **entirely in Java** - no HTML, CSS, or JavaScript required. Perfect for staying in Java-land while still getting a slick browser-based app.
 
 ## 📊 Features
 
@@ -58,9 +65,17 @@ A Java-based application for analyzing Formula 1 data and predicting race outcom
 - [ ] Pit stop strategy optimization
 - [ ] Driver form momentum tracking
 
+### Web UI (Vaadin)
+- [ ] Dashboard with season standings and upcoming races
+- [ ] Driver profiles with career stats and charts
+- [ ] Race prediction interface with confidence scores
+- [ ] Head-to-head comparison tool
+- [ ] Circuit analysis with historical data
+- [ ] Interactive data grids with filtering/sorting
+
 ### Visualization
-- [ ] Tableau dashboards for season analysis
-- [ ] JavaFX charts for in-app visualization
+- [ ] Vaadin Charts for in-app graphs (points progression, win rates)
+- [ ] Tableau dashboards for deep-dive season analysis
 - [ ] Export data for external analysis tools
 
 ## 📁 Project Structure
@@ -73,13 +88,19 @@ f1_java_webapp/
 │   │   │   └── com/f1analysis/
 │   │   │       ├── api/          # API clients for data fetching
 │   │   │       ├── models/       # Domain objects (Driver, Race, etc.)
-│   │   │       ├── repository/   # Database access layer
+│   │   │       ├── repository/   # Database access layer (Spring Data JPA)
 │   │   │       ├── service/      # Business logic & analysis
 │   │   │       ├── ml/           # ML model integration
-│   │   │       └── App.java      # Main entry point
+│   │   │       ├── views/        # Vaadin UI views
+│   │   │       │   ├── MainLayout.java
+│   │   │       │   ├── DashboardView.java
+│   │   │       │   ├── DriversView.java
+│   │   │       │   ├── PredictionsView.java
+│   │   │       │   └── CircuitsView.java
+│   │   │       └── Application.java  # Spring Boot entry point
 │   │   └── resources/
 │   │       ├── db/               # SQL scripts
-│   │       └── config/           # Configuration files
+│   │       └── application.properties
 │   └── test/
 ├── python/                       # Python ML scripts (Colab compatible)
 ├── tableau/                      # Tableau workbooks
@@ -122,18 +143,27 @@ createdb f1_data
 mvn clean install
 
 # Run the application
-mvn exec:java -Dexec.mainClass="com.f1analysis.App"
+mvn spring-boot:run
 ```
+
+The app will be available at `http://localhost:8080`
 
 ### Configuration
 
-Create `src/main/resources/config/application.properties`:
+Edit `src/main/resources/application.properties`:
 
 ```properties
-db.url=jdbc:postgresql://localhost:5432/f1_data
-db.username=your_username
-db.password=your_password
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/f1_data
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
+
+# Ergast API
 ergast.api.base=http://ergast.com/api/f1
+
+# Vaadin
+vaadin.launch-browser=true
 ```
 
 ## 📈 Sample Analyses
@@ -155,6 +185,61 @@ System.out.println("Podiums: " + stats.getPodiums());
 System.out.println("Win Rate: " + stats.getWinPercentage() + "%");
 ```
 
+## 🖥️ Vaadin UI Examples
+
+### Driver Grid View
+```java
+@Route(value = "drivers", layout = MainLayout.class)
+public class DriversView extends VerticalLayout {
+
+    public DriversView(DriverService driverService) {
+        // Data grid - all in Java, no HTML needed
+        Grid<Driver> grid = new Grid<>(Driver.class, false);
+        grid.addColumn(Driver::getName).setHeader("Driver");
+        grid.addColumn(Driver::getTeam).setHeader("Team");
+        grid.addColumn(Driver::getWins).setHeader("Wins");
+        grid.addColumn(Driver::getPodiums).setHeader("Podiums");
+        grid.setItems(driverService.getAllDrivers());
+        
+        // Search filter
+        TextField search = new TextField("Search drivers");
+        search.addValueChangeListener(e -> 
+            grid.setItems(driverService.searchDrivers(e.getValue()))
+        );
+        
+        add(new H2("Driver Statistics"), search, grid);
+    }
+}
+```
+
+### Prediction Dashboard
+```java
+@Route(value = "predictions", layout = MainLayout.class)
+public class PredictionsView extends VerticalLayout {
+
+    public PredictionsView(PredictionService predictionService) {
+        ComboBox<Race> raceSelect = new ComboBox<>("Select Race");
+        raceSelect.setItems(predictionService.getUpcomingRaces());
+        
+        Div resultsPanel = new Div();
+        
+        Button predictBtn = new Button("Run Prediction", e -> {
+            RacePrediction prediction = predictionService
+                .predictWinner(raceSelect.getValue());
+            
+            resultsPanel.removeAll();
+            resultsPanel.add(
+                new H3("Predicted Winner: " + prediction.getDriver()),
+                new ProgressBar(prediction.getConfidence() / 100.0),
+                new Span("Confidence: " + prediction.getConfidence() + "%")
+            );
+        });
+        
+        add(new H2("Race Predictions"), raceSelect, predictBtn, resultsPanel);
+    }
+}
+```
+
 ## 🔮 ML Model Ideas
 
 1. **Race Position Predictor** - Using qualifying position, historical circuit data, weather
@@ -170,18 +255,20 @@ System.out.println("Win Rate: " + stats.getWinPercentage() + "%");
 
 ## 🗺️ Roadmap
 
-- **Phase 1**: Data pipeline setup (API → Java → PostgreSQL)
-- **Phase 2**: Basic analysis queries and statistics
-- **Phase 3**: Tableau dashboard integration
-- **Phase 4**: ML model development and integration
-- **Phase 5**: Web interface (Spring Boot) or desktop app (JavaFX)
+- **Phase 1**: Project setup (Spring Boot + Vaadin + PostgreSQL)
+- **Phase 2**: Data pipeline (Ergast API → Java → Database)
+- **Phase 3**: Core Vaadin UI (Dashboard, Drivers, Circuits views)
+- **Phase 4**: Analysis features and Vaadin Charts integration
+- **Phase 5**: ML model development and prediction UI
+- **Phase 6**: Polish and Tableau export for external reporting
 
 ## 📝 Notes
 
 This is a learning project to get back into Java development. The focus is on:
 - Writing clean, well-structured Java code
-- Working with databases and SQL
-- Understanding data pipelines
+- Building a full-stack web app without leaving Java (thanks Vaadin!)
+- Working with Spring Boot and Spring Data JPA
+- Understanding data pipelines and database design
 - Having fun with F1 data 🏁
 
 ---
