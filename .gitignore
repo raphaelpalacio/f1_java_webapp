@@ -1,0 +1,74 @@
+# ===========================================
+# Maven
+# ===========================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# ===========================================
+# IDE - IntelliJ IDEA
+# ===========================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# ===========================================
+# IDE - Eclipse
+# ===========================================
+.classpath
+.project
+.settings/
+bin/
+
+# ===========================================
+# IDE - VS Code / Cursor
+# ===========================================
+.vscode/
+
+# ===========================================
+# Vaadin
+# ===========================================
+node_modules/
+frontend/generated/
+vite.generated.ts
+vite.config.ts
+types.d.ts
+tsconfig.json
+package.json
+package-lock.json
+pnpm-lock.yaml
+webpack.generated.js
+
+# ===========================================
+# OS Files
+# ===========================================
+.DS_Store
+Thumbs.db
+
+# ===========================================
+# Environment / Secrets
+# ===========================================
+.env
+.env.local
+*.env
+application-local.properties
+
+# ===========================================
+# Logs
+# ===========================================
+*.log
+logs/
+
+# ===========================================
+# Build outputs
+# ===========================================
+*.jar
+*.war
+*.ear
+*.class
+
