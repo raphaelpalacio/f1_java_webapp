@@ -36,9 +36,22 @@ public class MainLayout extends AppLayout {
     private void createDrawer() {
         VerticalLayout drawerContent = new VerticalLayout();
         
+        // Main navigation
         drawerContent.add(
             new RouterLink("Dashboard", DashboardView.class),
-            new RouterLink("Drivers", DriversView.class)
+            new RouterLink("Drivers", DriversView.class),
+            new RouterLink("Circuits", CircuitsView.class),
+            new RouterLink("Predictions", PredictionsView.class),
+            new RouterLink("Leaderboard", LeaderboardView.class),
+            new RouterLink("Ask the Paddock", ChatView.class)
+        );
+        
+        // User section
+        drawerContent.add(new com.vaadin.flow.component.html.Hr());
+        drawerContent.add(
+            new RouterLink("Profile", ProfileView.class),
+            new RouterLink("Login", LoginView.class),
+            new RouterLink("Register", RegisterView.class)
         );
         
         addToDrawer(drawerContent);
